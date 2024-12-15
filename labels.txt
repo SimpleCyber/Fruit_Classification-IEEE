@@ -1,0 +1,8 @@
+0 Good Banana
+1 Good Apple
+2 Good orange
+3 Good Pomogranate
+4 Apple Bad
+5 Banana Bad
+6 Orange bad
+7 Pomogranate bad
