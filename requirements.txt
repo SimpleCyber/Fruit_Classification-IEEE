@@ -1,0 +1,4 @@
+keras
+pillow
+numpy
+streamlit
