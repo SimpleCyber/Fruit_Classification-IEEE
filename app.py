@@ -53,7 +53,7 @@ fresh_captions = ["Good Banana", "Good Apple", "Good Orange", "Good Pomegranate"
 
 for idx, img_path in enumerate(fresh_images):
     with cols[idx % 2]:  # Cycle through columns
-        st.image(img_path, caption=fresh_captions[idx], use_column_width=True)
+        st.image(img_path, caption=fresh_captions[idx], use_container_width=True)
 
 st.sidebar.write("### Spoiled Fruits")
 cols = st.sidebar.columns(2)  # Create 2 columns for images in a row
@@ -64,7 +64,7 @@ spoiled_captions = ["Spoiled Banana", "Spoiled Apple", "Spoiled Orange", "Spoile
 
 for idx, img_path in enumerate(spoiled_images):
     with cols[idx % 2]:  # Cycle through columns
-        st.image(img_path, caption=spoiled_captions[idx], use_column_width=True)
+        st.image(img_path, caption=spoiled_captions[idx], use_container_width=True)
 
 # Image Upload
 input_img = st.file_uploader("Upload or Drag & Drop an image of a fruit", type=["jpg", "png", "jpeg"])
@@ -75,7 +75,7 @@ if input_img is not None:
 
         with col1:
             st.info("Your Uploaded Image")
-            st.image(input_img, use_column_width=False, width=200)  # Smaller image
+            st.image(input_img, use_container_width=False, width=200)  # Smaller image
 
         with col2:
             st.info("Classification Result")
