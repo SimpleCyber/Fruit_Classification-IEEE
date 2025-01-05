@@ -2,4 +2,4 @@ keras
 pillow
 numpy
 streamlit
-tensorflow==2.8
+tensorflow
