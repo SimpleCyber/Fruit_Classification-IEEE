@@ -3,6 +3,7 @@ from keras.applications.resnet50 import ResNet50, preprocess_input, decode_predi
 from PIL import Image, ImageOps  # Install pillow instead of PIL
 import numpy as np
 import streamlit as st
+import os
 
 # Initialize session state for navigation
 # Initialize session state for navigation
@@ -17,6 +18,14 @@ if "learn_page" not in st.session_state:
 
 def navigate_learn(sub_page):
     st.session_state.learn_page = sub_page
+
+# Session state for Sidebar Gallery
+if "gallery_visible" not in st.session_state:
+    st.session_state.gallery_visible = False
+if "gallery_count" not in st.session_state:
+    st.session_state.gallery_count = 10
+if "run_batch" not in st.session_state:
+    st.session_state.run_batch = False
 
 # Function to display CNN info
 def show_cnn_page():
@@ -192,9 +201,72 @@ st.set_page_config(layout="wide", page_title="Fruit Quality & AI Info")
 
 # Navigation logic
 if st.session_state.page == "Test":
-    # Sidebar for Test Page (Fruit Quality Detector)
-
+    # Sidebar for Test Page
+    st.sidebar.header("Sample Fruits")
+    st.sidebar.write("Drag and drop images for classification.")
     
+    st.sidebar.write("### Fresh Fruits")
+    f_cols = st.sidebar.columns(2)
+    fresh_images = ["images/banana_good.JPG", "images/apple_good.jpg", "images/orangee_good.JPG", "images/pomogranate_good.jpg"]
+    fresh_captions = ["Good Banana", "Good Apple", "Good Orange", "Good Pomegranate"]
+    for idx, img_path in enumerate(fresh_images):
+        with f_cols[idx % 2]:
+            st.image(img_path, caption=fresh_captions[idx], use_column_width=True)
+
+    st.sidebar.write("### Spoiled Fruits")
+    s_cols = st.sidebar.columns(2)
+    spoiled_images = ["images/babana_bad.JPG", "images/apple_bad (2).jpg", "images/orange_bad.jpg", "images/pomogranate_bad.jpg"]
+    spoiled_captions = ["Spoiled Banana", "Spoiled Apple", "Spoiled Orange", "Spoiled Pomegranate"]
+    for idx, img_path in enumerate(spoiled_images):
+        with s_cols[idx % 2]:
+            st.image(img_path, caption=spoiled_captions[idx], use_column_width=True)
+
+    st.sidebar.divider()
+    
+    # Local based testing section in sidebar
+    st.sidebar.header("📁 Local-based Testing")
+    st.sidebar.write("Browse and test images from `./random` folder.")
+
+    # Show/Hide Gallery
+    if not st.session_state.gallery_visible:
+        if st.sidebar.button("👁️ View Random Images"):
+            st.session_state.gallery_visible = True
+            st.rerun()
+    else:
+        st.sidebar.subheader("Gallery Preview")
+        random_dir = "random"
+        if os.path.exists(random_dir):
+            all_files = [f for f in os.listdir(random_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+            all_files.sort()
+            
+            show_count = st.session_state.gallery_count
+            current_files = all_files[:show_count]
+            
+            g_cols = st.sidebar.columns(2)
+            for i, f in enumerate(current_files):
+                with g_cols[i % 2]:
+                    st.image(os.path.join(random_dir, f), use_column_width=True)
+            
+            # Gallery Controls
+            c1, c2 = st.sidebar.columns(2)
+            if show_count < len(all_files):
+                if c1.button("➕ More"):
+                    st.session_state.gallery_count += 10
+                    st.rerun()
+            
+            if c2.button("❌ Close Preview"):
+                st.session_state.gallery_visible = False
+                st.session_state.gallery_count = 10
+                st.rerun()
+        else:
+            st.sidebar.error("random/ not found.")
+
+    st.sidebar.divider()
+    # Run Batch button in sidebar
+    if st.sidebar.button("🚀 Run Batch Classifier"):
+        st.session_state.run_batch = True
+        st.rerun()
+
     st.title("Fruit Quality Detector")
     
     # Rest of the Test page rendering happens later in the file
@@ -249,38 +321,12 @@ else:
 
     st.stop() # Prevents rendering the Test page content
 
-# Sidebar: Display sample fruits
-st.sidebar.header("Sample Fruits")
-st.sidebar.write("Drag and drop images from below for classification.")
-
-# Use columns in the sidebar to align images with spacing
-st.sidebar.write("### Fresh Fruits")
-cols = st.sidebar.columns(2)  # Create 2 columns for images in a row
-
-# Fresh fruits
-fresh_images = ["images/banana_good.JPG", "images/apple_good.jpg", "images/orangee_good.JPG", "images/pomogranate_good.jpg"]
-fresh_captions = ["Good Banana", "Good Apple", "Good Orange", "Good Pomegranate"]
-
-for idx, img_path in enumerate(fresh_images):
-    with cols[idx % 2]:  # Cycle through columns
-        st.image(img_path, caption=fresh_captions[idx], use_column_width=True)
-
-st.sidebar.write("### Spoiled Fruits")
-cols = st.sidebar.columns(2)  # Create 2 columns for images in a row
-
-# Spoiled fruits
-spoiled_images = ["images/babana_bad.JPG", "images/apple_bad (2).jpg", "images/orange_bad.jpg", "images/pomogranate_bad.jpg"]
-spoiled_captions = ["Spoiled Banana", "Spoiled Apple", "Spoiled Orange", "Spoiled Pomegranate"]
-
-for idx, img_path in enumerate(spoiled_images):
-    with cols[idx % 2]:  # Cycle through columns
-        st.image(img_path, caption=spoiled_captions[idx], use_column_width=True)
 
 # Bulk Image Upload
 input_imgs = st.file_uploader("Upload or Drag & Drop multiple fruit images", type=["jpg", "png", "jpeg", "webp"], accept_multiple_files=True)
 
 if input_imgs:
-    if st.button("Classify All Images"):
+    if st.button("Classify Images"):
         st.subheader("Classification Results Table")
         
         # Table Header
@@ -329,9 +375,67 @@ if input_imgs:
                 
             st.divider()
         
-        st.caption("Note: Custom Model is specialized for fruit quality; ResNet-50 is for general-purpose validation.")
+        st.divider()
 
+# Logic for Batch Classification (Triggered from Sidebar)
+if st.session_state.run_batch:
+    # Reset the flag after starting
+    st.session_state.run_batch = False
+    
+    st.subheader("🔥 Random Folder Batch Classification Results")
+    random_dir = "random"
+    if os.path.exists(random_dir):
+        files = [f for f in os.listdir(random_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+        if files:
+            st.info(f"Processing {len(files)} images from `./random`...")
+            
+            # Use columns for table
+            header_cols = st.columns([1, 2, 2])
+            header_cols[0].markdown("**Input Image**")
+            header_cols[1].markdown("**Custom CNN Model Result**")
+            header_cols[2].markdown("**ResNet-50 Result**")
+            st.divider()
+
+            for filename in files:
+                file_path = os.path.join(random_dir, filename)
+                try:
+                    image_file = Image.open(file_path)
+                except Exception as e:
+                    st.error(f"Error loading {filename}: {e}")
+                    continue
+                
+                row_cols = st.columns([1, 2, 2])
+                with row_cols[0]:
+                    st.image(file_path, use_column_width=True)
+                
+                label, confidence_score = classify_fruit(image_file)
+                resnet_label, resnet_score = classify_fruit_resnet(image_file)
+                
+                with row_cols[1]:
+                    if label.startswith("0 Good") or label.startswith("1 Good") or label.startswith("2 Good") or label.startswith("3 Good"):
+                        fruit_name = label.split(" ")[2]
+                        st.success(f"**Species**: {fruit_name}")
+                        st.info("**Condition**: Fresh")
+                    elif label.startswith("4") or label.startswith("5") or label.startswith("6") or label.startswith("7"):
+                        fruit_name = label.split(" ")[1]
+                        st.warning(f"**Species**: {fruit_name}")
+                        st.error("**Condition**: Spoiled")
+                    else:
+                        st.error("Unclassified")
+                    st.write(f"Confidence: {confidence_score:.1%}")
+
+                with row_cols[2]:
+                    st.write(f"**Object**: {resnet_label.replace('_', ' ').title()}")
+                    st.write(f"Confidence: {resnet_score:.1%}")
+                st.divider()
+    else:
+        st.error("`random/` folder not found.")
+
+st.caption("Note: Custom Model is specialized for fruit quality; ResNet-50 is for general-purpose validation.")
 st.divider()
+
+
+
 # Bottom right button for navigation to Learn Section
 col1, col2, col3 = st.columns([4, 3, 3])
 with col3:
