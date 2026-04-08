@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fruit-classification-ieee"
+version = "0.1.0"
+description = "Fruit Quality & Classification System using CNN and ResNet-50"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "User" },
+]
+dependencies = [
+  "tensorflow==2.15.0",
+  "keras==2.15.0",
+  "pillow",
+  "numpy",
+  "streamlit",
+]
+
+[project.urls]
+Homepage = "https://github.com/user/Fruit_Classification-IEEE"
+
+[tool.setuptools]
+py-modules = ["app"]

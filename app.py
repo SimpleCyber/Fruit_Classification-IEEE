@@ -172,7 +172,7 @@ def classify_fruit(img):
 
     # Predict using the model
     prediction = model.predict(data)
-    index = np.argmax(prediction)
+    index = int(np.argmax(prediction))
     class_name = class_names[index]
     confidence_score = prediction[0][index]
 
@@ -239,7 +239,7 @@ if st.session_state.page == "Test":
             all_files = [f for f in os.listdir(random_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
             all_files.sort()
             
-            show_count = st.session_state.gallery_count
+            show_count = int(st.session_state.gallery_count)
             current_files = all_files[:show_count]
             
             g_cols = st.sidebar.columns(2)
