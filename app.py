@@ -12,6 +12,12 @@ if "page" not in st.session_state:
 def navigate_to(page):
     st.session_state.page = page
 
+if "learn_page" not in st.session_state:
+    st.session_state.learn_page = "About Project"
+
+def navigate_learn(sub_page):
+    st.session_state.learn_page = sub_page
+
 # Function to display CNN info
 def show_cnn_page():
     st.header("1. CNN (Convolutional Neural Networks)")
@@ -71,6 +77,57 @@ def show_resnet_page():
     **ResNet-50** is widely used for transfer learning. It enables training of extremely deep networks without accuracy degradation.
     """)
     st.image("project.png", caption="ResNet Architecture skip connections.")
+
+# Function to display ResNet-50 Specific Info
+def show_resnet50_detailed():
+    st.header("ResNet-50: A Closer Look")
+    st.write("""
+    ResNet-50 is a variant of the ResNet (Residual Network) model that has 50 layers deep. 
+    The '50' refers to the number of weighted layers (48 convolutional layers, 1 connected layer, and 1 pool layer).
+    
+    **Key Technical Specifications:**
+    - **Convolutional Layers**: 48 layers for feature extraction.
+    - **Fully Connected Layer**: 1 layer for classification.
+    - **Average Pooling Layer**: 1 layer for dimensionality reduction.
+    - **Number of Parameters**: Roughly 25.6 million.
+    - **Input Size**: Standard size is 224x224x3 (RGB images).
+    
+    **Why use ResNet-50?**
+    It balances depth and performance. While deeper models exist (ResNet-101, ResNet-152), 
+    ResNet-50 is often the benchmark for transfer learning because it is accurate enough for most tasks while being computationally efficient.
+    """)
+    st.info("In this project, ResNet-50 is used as a baseline comparator to validate the performance of our custom-trained CNN model.")
+
+# Function to display project info and process
+def show_about_project():
+    st.header("What my project is about")
+    st.write("""
+    This project is a **Fruit Classification and Quality Detection System**. 
+    It aims to automate the process of identifying various fruits and determining whether they are fresh or spoiled. 
+    By leveraging deep learning models, we can provide consistent and rapid assessments of fruit quality, 
+    which is essential for the food industry and supply chain management.
+    """)
+    
+    st.header("Development Process")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("(a) Training Process")
+        st.markdown("""
+        1. **Data Collection**: Gathering thousands of images of fresh and spoiled fruits.
+        2. **Preprocessing**: Resizing images to 224x224, normalizing pixel values, and data augmentation.
+        3. **Model Selection**: choosing a CNN architecture suitable for image classification.
+        4. **Training**: Using backpropagation to minimize classification error.
+        5. **Validation**: Testing on unseen data to ensure the model generalizes well.
+        """)
+    with col2:
+        st.subheader("(b) How we test it")
+        st.markdown("""
+        **Step-by-Step Flow:**
+        1. **Upload**: User uploads a fruit image or drags it from the samples.
+        2. **CNN Model**: Our specialized custom model classifies the fruit species and quality (Good/Bad).
+        3. **ResNet-50**: A pre-trained ResNet-50 model provides a general-purpose prediction for verification.
+        4. **Output**: The system displays the detected object, condition, and confidence scores for both models.
+        """)
 
 # Load models once using cache to improve performance
 @st.cache_resource
@@ -135,28 +192,67 @@ st.set_page_config(layout="wide", page_title="Fruit Quality & AI Info")
 
 # Navigation logic
 if st.session_state.page == "Test":
-    # Sidebar for Test Page
+    # Sidebar for Test Page (Fruit Quality Detector)
+    st.sidebar.header("📋 Project Info")
+    st.sidebar.write("""
+    **Fruit Quality Detector**
+    Automated classification of fruit species and freshness using Deep Learning.
+    """)
+    
+    st.sidebar.header("🏗️ Baseline Architecture")
+    st.sidebar.markdown("""
+    - **Custom CNN**: Specialized model trained specifically for fruit quality detection.
+    - **ResNet-50**: General-purpose ImageNet model used as a performance benchmark.
+    """)
+    st.sidebar.divider()
     
     st.title("Fruit Quality Detector")
     
     # Rest of the Test page rendering happens later in the file
 else:
-    # Sidebar for Learn Section (reserved for other things as per user hint, but no nav buttons)
-    st.sidebar.title("Deep Learning Info")
-    st.sidebar.divider()
-
-    # Render Learn Page (CNN & ResNet combined)
-    st.title("Deep Learning: CNN & ResNet")
+    # Sidebar for Learn Section
+    st.sidebar.title("📚 Learn Section")
     
-    tab1, tab2 = st.tabs(["CNN Architecture", "ResNet Architecture"])
-    with tab1:
+    if st.sidebar.button("📄 About Project"):
+        navigate_learn("About Project")
+    if st.sidebar.button("🔍 CNN ResNet Overview"):
+        navigate_learn("Overview")
+    if st.sidebar.button("🚀 ResNet-50 Deep Dive"):
+        navigate_learn("Deep Dive")
+    if st.sidebar.button("🏗️ Architecture"):
+        navigate_learn("Architecture")
+        
+    st.sidebar.divider()
+    
+    # Back to Classification button in sidebar
+    if st.sidebar.button("🍎 Back to Classification"):
+        navigate_to("Test")
+        st.rerun()
+
+    # Render Learn Page Content based on selection
+    if st.session_state.learn_page == "About Project":
+        show_about_project()
+    elif st.session_state.learn_page == "Overview":
+        st.title("Deep Learning Overview")
         show_cnn_page()
-    with tab2:
+        st.divider()
         show_resnet_page()
+    elif st.session_state.learn_page == "Deep Dive":
+        show_resnet50_detailed()
+    elif st.session_state.learn_page == "Architecture":
+        st.title("Project Architecture")
+        st.subheader("Visualizing the Process")
+        st.info("The system follows a sequential pipeline from input to result.")
+        st.markdown("""
+        1. **Input**: Image Data (Matrice of pixels)
+        2. **Convolution**: Feature Extraction (Edges, Shapes)
+        3. **Classification**: Dense Layers matching features to labels
+        4. **Output**: Probability Score (e.g., 98% Good Pomegranate)
+        """)
     
     st.divider()
-    # Bottom right button to go back to Test Section
-    col1, col2, col3 = st.columns([4, 4, 2])
+    # Bottom right button to go back to Test Section (preserving linear flow)
+    col1, col2, col3 = st.columns([4, 3, 3])
     with col3:
         if st.button("🍎 Go to Test Section →"):
             navigate_to("Test")
@@ -240,8 +336,8 @@ if input_img is not None:
 
 st.divider()
 # Bottom right button for navigation to Learn Section
-col1, col2, col3 = st.columns([4, 4, 2])
+col1, col2, col3 = st.columns([4, 3, 3])
 with col3:
-    if st.button("🧠 Learn CNN ResNet →"):
+    if st.button("🧠 Learn about the Project & AI →"):
         navigate_to("Learn")
         st.rerun()
