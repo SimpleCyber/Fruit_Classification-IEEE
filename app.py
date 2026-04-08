@@ -193,18 +193,7 @@ st.set_page_config(layout="wide", page_title="Fruit Quality & AI Info")
 # Navigation logic
 if st.session_state.page == "Test":
     # Sidebar for Test Page (Fruit Quality Detector)
-    st.sidebar.header("📋 Project Info")
-    st.sidebar.write("""
-    **Fruit Quality Detector**
-    Automated classification of fruit species and freshness using Deep Learning.
-    """)
-    
-    st.sidebar.header("🏗️ Baseline Architecture")
-    st.sidebar.markdown("""
-    - **Custom CNN**: Specialized model trained specifically for fruit quality detection.
-    - **ResNet-50**: General-purpose ImageNet model used as a performance benchmark.
-    """)
-    st.sidebar.divider()
+
     
     st.title("Fruit Quality Detector")
     
@@ -287,52 +276,60 @@ for idx, img_path in enumerate(spoiled_images):
     with cols[idx % 2]:  # Cycle through columns
         st.image(img_path, caption=spoiled_captions[idx], use_column_width=True)
 
-# Image Upload
-input_img = st.file_uploader("Upload or Drag & Drop an image of a fruit", type=["jpg", "png", "jpeg", "webp"])
+# Bulk Image Upload
+input_imgs = st.file_uploader("Upload or Drag & Drop multiple fruit images", type=["jpg", "png", "jpeg", "webp"], accept_multiple_files=True)
 
-if input_img is not None:
-    if st.button("Classify"):
-        col1, col2 = st.columns([1, 1])
+if input_imgs:
+    if st.button("Classify All Images"):
+        st.subheader("Classification Results Table")
+        
+        # Table Header
+        header_cols = st.columns([1, 2, 2])
+        header_cols[0].markdown("**Input Image**")
+        header_cols[1].markdown("**Custom CNN Model Result**")
+        header_cols[2].markdown("**ResNet-50 Result**")
+        st.divider()
 
-        with col1:
-            st.info("Your Uploaded Image")
-            st.image(input_img, use_column_width=False, width=200)  # Smaller image
-
-        with col2:
-            st.info("Classification Result")
+        for input_img in input_imgs:
             try:
                 image_file = Image.open(input_img)
             except Exception as e:
-                st.error(f"Error loading image: {e}")
-                st.info("Ensure the file is a valid JPG, PNG, or WEBP image.")
-                st.stop()
+                st.error(f"Error loading image {input_img.name}: {e}")
+                continue
             
+            # Row for each image
+            row_cols = st.columns([1, 2, 2])
+            
+            # Column 1: Image
+            with row_cols[0]:
+                st.image(input_img, use_column_width=True)
+            
+            # Run Classifications
             label, confidence_score = classify_fruit(image_file)
-
-            if label.startswith("0 Good") or label.startswith("1 Good") or label.startswith("2 Good") or label.startswith("3 Good"):
-                # Format is "index Good FruitName"
-                fruit_name = label.split(" ")[2]
-                st.success(f"**Custom Model Prediction**: {fruit_name}")
-                st.info(f"Condition: Good (Not Spoiled)")
-            elif label.startswith("4") or label.startswith("5") or label.startswith("6") or label.startswith("7"):
-                # Format is "index FruitName Bad"
-                fruit_name = label.split(" ")[1]
-                st.warning(f"**Custom Model Prediction**: {fruit_name}")
-                st.error("Condition: Spoiled")
-            else:
-                st.error("The custom model could not classify this image.")
-            
-            st.code(f"Confidence (Custom): {confidence_score:.2%}")
-
-            st.divider()
-
-            # ResNet50 Result
-            st.info("ResNet50 Prediction (General Purpose)")
             resnet_label, resnet_score = classify_fruit_resnet(image_file)
-            st.write(f"**Object Detected**: {resnet_label.replace('_', ' ').title()}")
-            st.code(f"Confidence (ResNet50): {resnet_score:.2%}")
             
-            st.caption("Note: ResNet50 is a general-purpose model trained on ImageNet, while the Custom Model is specialized for fruit quality.")
+            # Column 2: CNN Result
+            with row_cols[1]:
+                if label.startswith("0 Good") or label.startswith("1 Good") or label.startswith("2 Good") or label.startswith("3 Good"):
+                    fruit_name = label.split(" ")[2]
+                    st.success(f"**Species**: {fruit_name}")
+                    st.info(f"**Condition**: Fresh")
+                elif label.startswith("4") or label.startswith("5") or label.startswith("6") or label.startswith("7"):
+                    fruit_name = label.split(" ")[1]
+                    st.warning(f"**Species**: {fruit_name}")
+                    st.error("**Condition**: Spoiled")
+                else:
+                    st.error("Unclassified")
+                st.write(f"Confidence: {confidence_score:.1%}")
+
+            # Column 3: ResNet Result
+            with row_cols[2]:
+                st.write(f"**Object**: {resnet_label.replace('_', ' ').title()}")
+                st.write(f"Confidence: {resnet_score:.1%}")
+                
+            st.divider()
+        
+        st.caption("Note: Custom Model is specialized for fruit quality; ResNet-50 is for general-purpose validation.")
 
 st.divider()
 # Bottom right button for navigation to Learn Section
