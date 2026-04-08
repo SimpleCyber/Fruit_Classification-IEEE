@@ -4,6 +4,74 @@ from PIL import Image, ImageOps  # Install pillow instead of PIL
 import numpy as np
 import streamlit as st
 
+# Initialize session state for navigation
+# Initialize session state for navigation
+if "page" not in st.session_state:
+    st.session_state.page = "Test"
+
+def navigate_to(page):
+    st.session_state.page = page
+
+# Function to display CNN info
+def show_cnn_page():
+    st.header("1. CNN (Convolutional Neural Networks)")
+    st.subheader("(a) Architecture and Models")
+    st.write("""
+    A Convolutional Neural Network (CNN) is a deep learning algorithm specifically designed for processing structured grid data, like images.
+    
+    **Key Components:**
+    - **Input Layer**: Holds raw pixel values.
+    - **Convolutional Layer**: Uses filters to extract features like edges and textures.
+    - **Activation Layer (ReLU)**: Applies non-linear functions to help the model learn complex patterns.
+    - **Pooling Layer**: Reduces the spatial dimensions (e.g., Max Pooling) to decrease computation and prevent overfitting.
+    - **Fully Connected (FC) Layer**: Connects every neuron in one layer to every neuron in another, usually for classification tasks.
+    
+    **Famous Models:**
+    - **LeNet-5**: Digit recognition.
+    - **AlexNet**: ImageNet 2012 winner.
+    - **VGGNet**: 3x3 filter simplicity.
+    - **Inception**: Multi-filter size modules.
+    """)
+    
+    st.subheader("(b) How it Works")
+    st.write("""
+    Learns spatial hierarchies of features by scanning filters over images (convolution). 
+    Early layers detect simple patterns like edges, while deeper layers recognize complex objects.
+    """)
+    
+    st.subheader("(c) All the Steps Involved")
+    st.markdown("""
+    1. **Convolution**: Creating Feature Maps.
+    2. **ReLU**: Non-linearity.
+    3. **Pooling**: Downsampling.
+    4. **Flattening**: 2D to 1D vector.
+    5. **Full Connection**: Final classification.
+    """)
+
+# Function to display ResNet info
+def show_resnet_page():
+    st.header("2. ResNet (Residual Networks)")
+    st.subheader("(a) Architecture and Diagrams")
+    st.write("""
+    ResNet solves the **Vanishing Gradient Problem** using **Skip Connections**.
+    Instead of learning $H(x)$, it learns $F(x) = H(x) - x$. The output is $F(x) + x$.
+    """)
+    
+    st.markdown("""
+    ```text
+    Input (x) ----+------> [ Weight Layer ] ----> [ ReLU ] ----> [ Weight Layer ] ----+---> Output (H(x))
+                  |                                                                  ^
+                  |                                                                  |
+                  +------------------------- Shortcut / Identity --------------------+
+    ```
+    """)
+    
+    st.subheader("(b) Images and Related Information")
+    st.write("""
+    **ResNet-50** is widely used for transfer learning. It enables training of extremely deep networks without accuracy degradation.
+    """)
+    st.image("project.png", caption="ResNet Architecture skip connections.")
+
 # Load models once using cache to improve performance
 @st.cache_resource
 def get_custom_model():
@@ -63,10 +131,38 @@ def classify_fruit_resnet(img):
     decoded = decode_predictions(preds, top=1)[0][0]
     return decoded[1], decoded[2]  # Return description and confidence
 
-# Streamlit App Configuration
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="Fruit Quality & AI Info")
 
-st.title("Fruit Quality Detector")
+# Navigation logic
+if st.session_state.page == "Test":
+    # Sidebar for Test Page
+    
+    st.title("Fruit Quality Detector")
+    
+    # Rest of the Test page rendering happens later in the file
+else:
+    # Sidebar for Learn Section (reserved for other things as per user hint, but no nav buttons)
+    st.sidebar.title("Deep Learning Info")
+    st.sidebar.divider()
+
+    # Render Learn Page (CNN & ResNet combined)
+    st.title("Deep Learning: CNN & ResNet")
+    
+    tab1, tab2 = st.tabs(["CNN Architecture", "ResNet Architecture"])
+    with tab1:
+        show_cnn_page()
+    with tab2:
+        show_resnet_page()
+    
+    st.divider()
+    # Bottom right button to go back to Test Section
+    col1, col2, col3 = st.columns([4, 4, 2])
+    with col3:
+        if st.button("🍎 Go to Test Section →"):
+            navigate_to("Test")
+            st.rerun()
+
+    st.stop() # Prevents rendering the Test page content
 
 # Sidebar: Display sample fruits
 st.sidebar.header("Sample Fruits")
@@ -108,7 +204,13 @@ if input_img is not None:
 
         with col2:
             st.info("Classification Result")
-            image_file = Image.open(input_img)
+            try:
+                image_file = Image.open(input_img)
+            except Exception as e:
+                st.error(f"Error loading image: {e}")
+                st.info("Ensure the file is a valid JPG, PNG, or WEBP image.")
+                st.stop()
+            
             label, confidence_score = classify_fruit(image_file)
 
             if label.startswith("0 Good") or label.startswith("1 Good") or label.startswith("2 Good") or label.startswith("3 Good"):
@@ -135,3 +237,11 @@ if input_img is not None:
             st.code(f"Confidence (ResNet50): {resnet_score:.2%}")
             
             st.caption("Note: ResNet50 is a general-purpose model trained on ImageNet, while the Custom Model is specialized for fruit quality.")
+
+st.divider()
+# Bottom right button for navigation to Learn Section
+col1, col2, col3 = st.columns([4, 4, 2])
+with col3:
+    if st.button("🧠 Learn CNN ResNet →"):
+        navigate_to("Learn")
+        st.rerun()
