@@ -4,6 +4,8 @@ from PIL import Image, ImageOps  # Install pillow instead of PIL
 import numpy as np
 import streamlit as st
 import os
+import sys
+import subprocess
 
 # Initialize session state for navigation
 # Initialize session state for navigation
@@ -442,3 +444,19 @@ with col3:
     if st.button("🧠 Learn about the Project & AI →"):
         navigate_to("Learn")
         st.rerun()
+
+
+def main():
+    """Entrypoint for the application."""
+    port = os.environ.get("PORT", "8501")
+    subprocess.run([
+        sys.executable, "-m", "streamlit", "run",
+        os.path.abspath(__file__),
+        "--server.port", port,
+        "--server.address", "0.0.0.0",
+        "--server.headless", "true",
+    ])
+
+
+if __name__ == "__main__":
+    main()

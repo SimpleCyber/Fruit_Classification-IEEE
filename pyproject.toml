@@ -19,6 +19,9 @@ dependencies = [
   "streamlit",
 ]
 
+[project.scripts]
+app = "app:main"
+
 [project.urls]
 Homepage = "https://github.com/user/Fruit_Classification-IEEE"
 
